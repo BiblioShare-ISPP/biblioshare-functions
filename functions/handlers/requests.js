@@ -21,9 +21,22 @@ exports.requestsByBook = (req, res) => {
     .catch(err => console.error(err));
 };
 
-//Acept request
+//Accept request
 exports.acceptRequest = (req, res) => {
-
+    db.doc(`/requests/${req.params.requestId}`).get()
+    .then(doc => {
+        if(!doc.exists){
+            return res.status(404).json({ error: 'Request not found'});
+        }
+        if(doc.status !== "pending"){
+            return res.status(409).json({ error: 'You can only accept pending requests'});
+        }
+        return doc.ref.update({ status: "accepted"});
+    })
+    .catch(err => {
+        console.log(err);
+        res.status(500).json({ error: 'Something went wrong'});
+    });
 };
 
 //Decline request
@@ -32,6 +45,9 @@ exports.declineRequest = (req, res) => {
     .then(doc => {
         if(!doc.exists){
             return res.status(404).json({ error: 'Request not found'});
+        }
+        if(doc.status !== "pending"){
+            return res.status(409).json({ error: 'You can only decline pending requests'});
         }
         return doc.ref.update({ status: "declined"});
     })

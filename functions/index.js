@@ -32,7 +32,7 @@ const {
 
 //Request routes
 app.get('/requests/:bookId', FBAuth, requestsByBook);
-//app.get('/request/:requestId/accept', FBAuth, acceptRequest);
+app.get('/request/:requestId/accept', FBAuth, acceptRequest);
 app.get('/request/:requestId/decline', FBAuth, declineRequest);
 
 //Books routes
