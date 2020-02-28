@@ -1,6 +1,6 @@
 const { db } = require('../util/admin');
 
-//Get all request by book
+//Get all requests by book
 exports.requestsByBook = (req, res) => {
     db.collection('requests')
     .where('bookId', '==', req.params.bookId)
@@ -11,6 +11,29 @@ exports.requestsByBook = (req, res) => {
         data.forEach(doc => {
             requests.push({
                 bookId: doc.data().bookId,
+                bookOwner: doc.data().bookOwner,
+                userHandle: doc.data().userHandle,
+                status: doc.data().status,
+                createdAt: doc.data().createdAt
+            });
+        });
+        return res.json(requests);
+    })
+    .catch(err => console.error(err));
+};
+
+//Get all requests by user
+exports.requestsByUser = (req, res) => {
+    db.collection('requests')
+    .where('bookOwner', '==', req.params.handle)
+    .orderBy('createdAt', 'desc')
+    .get()
+    .then(data => {
+        let requests = [];
+        data.forEach(doc => {
+            requests.push({
+                bookId: doc.data().bookId,
+                bookOwner: doc.data().bookOwner,
                 userHandle: doc.data().userHandle,
                 status: doc.data().status,
                 createdAt: doc.data().createdAt

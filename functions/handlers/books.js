@@ -139,6 +139,7 @@ exports.requestBook = (req, res) =>{
         if(data.empty){
             return db.collection('requests').add({
                 bookId: req.params.bookId,
+                bookOwner: bookData.owner,
                 userHandle: req.user.handle,
                 status: "pending",
                 createdAt: new Date().toISOString()

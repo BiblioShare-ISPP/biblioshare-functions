@@ -26,12 +26,14 @@ const {
 
 const {
     requestsByBook,
+    requestsByUser,
     acceptRequest,
     declineRequest
 } = require('./handlers/requests');
 
 //Request routes
 app.get('/requests/:bookId', FBAuth, requestsByBook);
+app.get('/requests/:handle', FBAuth, requestsByUser);
 app.get('/request/:requestId/accept', FBAuth, acceptRequest);
 app.get('/request/:requestId/decline', FBAuth, declineRequest);
 
