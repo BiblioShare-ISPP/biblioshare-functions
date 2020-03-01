@@ -247,35 +247,3 @@ exports.getBooksByUser = (req, res) => {
     })
     .catch(err => console.error(err));
 };
-
-// TODO
-exports.postFromISBN = (req, res) => {
-    const newBook = {
-        author: req.body.author,
-        cover: imageUrl,
-        title: req.body.title,
-        userPostDate: new Date().toISOString(),
-        owner: req.user.handle,
-        location: (req.user.location == null) ? "" : req.user.location,
-        ownerImage: req.user.imageUrl,
-        requestCount: 0,
-        commentCount: 0
-    };
-
-    const { valid, errors } = validateBookData(newBook);
-
-    if(!valid) return res.status(400).json(errors);
-
-    db
-    .collection('books')
-    .add(newBook)
-    .then((doc) => {
-        const resBook = newBook;
-        resBook.bookId = doc.id;
-        res.json(resBook);
-    })
-    .catch((err) => {
-        res.status(500).json({error: 'something went wrong'});
-        console.error(err);
-    });
-};
