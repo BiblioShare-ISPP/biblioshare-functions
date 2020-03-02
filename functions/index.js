@@ -2,6 +2,9 @@ const functions = require('firebase-functions');
 const app = require('express')();
 const FBAuth = require('./util/fbAuth');
 
+const cors = require('cors');
+app.use(cors());
+
 const { db } = require('./util/admin');
 
 const {
@@ -12,7 +15,8 @@ const {
     requestBook,
     cancelRequestBook,
     deleteBook,
-    getBooksByUser
+    getBooksByUser,
+    uploadCover
 } = require('./handlers/books');
 const { 
     signup, 
@@ -46,6 +50,7 @@ app.get('/book/:bookId/request', FBAuth, requestBook);
 app.get('/book/:bookId/cancelRequest', FBAuth, cancelRequestBook);
 app.post('/book/:bookId/comment', FBAuth, commentOnBook);
 app.get('/books/:handle', getBooksByUser);
+app.post('/book/image', FBAuth, uploadCover);
 
 //Users routes
 app.post('/signup', signup);
