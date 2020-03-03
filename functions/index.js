@@ -36,8 +36,8 @@ const {
 } = require('./handlers/requests');
 
 //Request routes
-app.get('/requests/:bookId', FBAuth, requestsByBook);
-app.get('/requests/:handle', FBAuth, requestsByUser);
+app.get('/requestsByBook/:bookId', FBAuth, requestsByBook);
+app.get('/requestsByUser/:handle', FBAuth, requestsByUser);
 app.get('/request/:requestId/accept', FBAuth, acceptRequest);
 app.get('/request/:requestId/decline', FBAuth, declineRequest);
 

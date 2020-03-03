@@ -41,7 +41,9 @@ exports.requestsByUser = (req, res) => {
         });
         return res.json(requests);
     })
-    .catch(err => console.error(err));
+    .catch(err => {
+        console.error(err);
+    });
 };
 
 //Accept request
