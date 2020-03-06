@@ -10,6 +10,7 @@ exports.requestsByBook = (req, res) => {
         let requests = [];
         data.forEach(doc => {
             requests.push({
+                requestId: doc.id,
                 bookId: doc.data().bookId,
                 bookOwner: doc.data().bookOwner,
                 userHandle: doc.data().userHandle,
@@ -32,6 +33,7 @@ exports.requestsByUser = (req, res) => {
         let requests = [];
         data.forEach(doc => {
             requests.push({
+                requestId: doc.id,
                 bookId: doc.data().bookId,
                 bookOwner: doc.data().bookOwner,
                 userHandle: doc.data().userHandle,
@@ -53,10 +55,13 @@ exports.acceptRequest = (req, res) => {
         if(!doc.exists){
             return res.status(404).json({ error: 'Request not found'});
         }
-        if(doc.status !== "pending"){
+        if(doc.data().status !== "pending"){
             return res.status(409).json({ error: 'You can only accept pending requests'});
         }
-        return doc.ref.update({ status: "accepted"});
+        doc.ref.update({ status: "accepted"})
+    })
+    .then(()=>{
+        return res.json({message: 'Request accepted'});
     })
     .catch(err => {
         console.log(err);
@@ -71,10 +76,13 @@ exports.declineRequest = (req, res) => {
         if(!doc.exists){
             return res.status(404).json({ error: 'Request not found'});
         }
-        if(doc.status !== "pending"){
+        if(doc.data().status !== "pending"){
             return res.status(409).json({ error: 'You can only decline pending requests'});
         }
-        return doc.ref.update({ status: "declined"});
+        doc.ref.update({ status: "declined"});
+    })
+    .then(()=>{
+        return res.json({message: 'Request declined'});
     })
     .catch(err => {
         console.log(err);
