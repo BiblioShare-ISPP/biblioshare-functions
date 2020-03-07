@@ -4,6 +4,49 @@ const config = require('../util/config');
 
 const { validateBookData } = require('../util/validators');
 
+//Find books
+exports.findBooks = (req, res) => {
+    let query = req.params.query;
+    var stringSimilarity = require('string-similarity');
+
+    db.collection('books')
+    .orderBy('userPostDate', 'desc')
+    .get()
+    .then(data => {
+        let books = [];
+        data.forEach(doc => {
+            books.push({
+                bookId: doc.id,
+                author: doc.data().author,
+                cover: doc.data().cover,
+                title: doc.data().title,
+                userPostDate: doc.data().userPostDate,
+                owner: doc.data().owner,
+                ownerImage: doc.data().ownerImage,
+                location: doc.data().location
+            });
+        });
+
+        let results = [];
+        var distanceTitle, distanceAuthor, total;
+
+        books.forEach(book => {
+            distanceTitle = stringSimilarity.compareTwoStrings(query.toLowerCase(), book.title.toLowerCase());
+            distanceAuthor = stringSimilarity.compareTwoStrings(query.toLowerCase(), book.author.toLowerCase());
+            total = distanceTitle + distanceAuthor;
+            results.push({
+                book: book,
+                distance: total
+            });
+        });
+        results.sort((a, b) => a.distance < b.distance ) ? 1 : -1;
+
+        return res.json(results);
+    })
+    .catch(err => console.error(err));
+};
+
+
 //Get all books
 exports.getAllBooks = (req, res) => {
     db.collection('books')
