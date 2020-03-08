@@ -41,7 +41,16 @@ exports.findBooks = (req, res) => {
         });
         results.sort((a, b) => a.distance < b.distance ) ? 1 : -1;
 
-        return res.json(results);
+        let filteredResults = [];
+        results.forEach(book => {
+            if(book.distance > 0.15){
+                filteredResults.push(
+                    book.book
+                )
+            }
+        });
+
+        return res.json(filteredResults);
     })
     .catch(err => console.error(err));
 };
@@ -83,7 +92,8 @@ exports.postOneBook = (req, res) =>{
         location: (req.user.location == null) ? "" : req.user.location,
         ownerImage: req.user.imageUrl,
         requestCount: 0,
-        commentCount: 0
+        commentCount: 0,
+        availability: "available"
     };
 
     if(newBook.cover.trim() === ''){
@@ -189,6 +199,8 @@ exports.requestBook = (req, res) =>{
                 bookId: req.params.bookId,
                 bookOwner: bookData.owner,
                 userHandle: req.user.handle,
+                title: bookData.title,
+                cover: bookData.cover,
                 status: "pending",
                 createdAt: new Date().toISOString()
             })
