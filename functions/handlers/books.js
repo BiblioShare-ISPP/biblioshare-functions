@@ -39,17 +39,18 @@ exports.findBooks = (req, res) => {
                 distance: total
             });
         });
-        results.sort((a, b) => a.distance < b.distance ) ? 1 : -1;
-
+        results.sort(function(a, b){
+            return b.distance - a.distance;
+        });
+        
         let filteredResults = [];
         results.forEach(book => {
-            if(book.distance > 0.15){
+            if(book.distance > 0.25){
                 filteredResults.push(
                     book.book
                 )
             }
         });
-
         return res.json(filteredResults);
     })
     .catch(err => console.error(err));

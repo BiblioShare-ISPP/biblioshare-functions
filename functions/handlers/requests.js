@@ -15,6 +15,8 @@ exports.requestsByBook = (req, res) => {
                 bookOwner: doc.data().bookOwner,
                 userHandle: doc.data().userHandle,
                 status: doc.data().status,
+                cover: doc.data().cover,
+                title: doc.data().title,
                 createdAt: doc.data().createdAt
             });
         });
@@ -38,6 +40,8 @@ exports.requestsByUser = (req, res) => {
                 bookOwner: doc.data().bookOwner,
                 userHandle: doc.data().userHandle,
                 status: doc.data().status,
+                cover: doc.data().cover,
+                title: doc.data().title,
                 createdAt: doc.data().createdAt
             });
         });
@@ -61,7 +65,10 @@ exports.acceptRequest = (req, res) => {
         doc.ref.update({ status: "accepted"})
     })
     .then(()=>{
-        return res.json({message: 'Request accepted'});
+        return res.json({
+            requestId: req.params.requestId,
+            message: 'Request accepted'
+        });
     })
     .catch(err => {
         console.log(err);
@@ -82,7 +89,10 @@ exports.declineRequest = (req, res) => {
         doc.ref.update({ status: "declined"});
     })
     .then(()=>{
-        return res.json({message: 'Request declined'});
+        return res.json({
+            requestId: req.params.requestId,
+            message: 'Request declined'
+        });
     })
     .catch(err => {
         console.log(err);
