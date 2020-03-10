@@ -108,7 +108,7 @@ exports.addUserDetails = (req, res) => {
 
 //Get any user's details
 exports.getUserDetails = (req, res) => {
-  let userData = [];
+  let userData = {};
   db.doc(`/users/${req.params.handle}`).get()
   .then((doc) => {
     if(doc.exists){
@@ -128,6 +128,7 @@ exports.getUserDetails = (req, res) => {
         commentCount: doc.data().commentCount,
         cover: doc.data().cover,
         owner: doc.data().owner,
+        ownerImage: doc.data().ownerImage,
         requestCount: doc.data().requestCount,
         title: doc.data().title,
         userPostDate: doc.data().userPostDate,
