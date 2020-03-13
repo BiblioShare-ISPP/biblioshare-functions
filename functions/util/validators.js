@@ -9,6 +9,11 @@ const isEmpty = (string) => {
     else return false;
 }
 
+const legalString = (userInput) =>{
+    const regEx = /^[a-zA-Z0-9]+$/;
+    if (userInput.match(regEx)) return true;
+    else return false;
+} 
 
 exports.validateSignupData = (data) => {
     let errors = {};
@@ -24,6 +29,7 @@ exports.validateSignupData = (data) => {
     if(isEmpty(data.password)) errors.password = 'Must not be empty';
     if(data.password !== data.confirmPassword) errors.confirmPassword = 'Password must match';
     if(isEmpty(data.handle)) errors.handle = 'Must not be empty';
+    if(!legalString(data.handle)) errors.handle = 'Handle can not containt special characters';
 
     return{
         errors, 

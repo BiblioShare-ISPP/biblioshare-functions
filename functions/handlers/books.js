@@ -73,7 +73,8 @@ exports.getAllBooks = (req, res) => {
                 userPostDate: doc.data().userPostDate,
                 owner: doc.data().owner,
                 ownerImage: doc.data().ownerImage,
-                location: doc.data().location
+                location: doc.data().location,
+                availability: doc.data().availability
             });
         });
         return res.json(books);
@@ -303,7 +304,8 @@ exports.getBooksByUser = (req, res) => {
                 userPostDate: doc.data().userPostDate,
                 owner: doc.data().owner,
                 ownerImage: doc.data().ownerImage,
-                location: doc.data().location
+                location: doc.data().location,
+                availability: doc.data().availability
             });
         });
         return res.json(books);

@@ -3,9 +3,11 @@ const app = require('express')();
 const FBAuth = require('./util/fbAuth');
 
 const cors = require('cors');
-app.use(cors());
+app.use(cors({ origin: true }));
 
 const { db } = require('./util/admin');
+
+const firebase = require('firebase');
 
 const {
     getAllBooks,
@@ -177,4 +179,64 @@ exports.onBookDelete = functions.region('europe-west1').firestore.document('/boo
         return batch.commit();
     })
     .catch((err) => console.error(err));
+});
+
+//Se rechazan las otras peticiones
+exports.onAcceptRequest = functions.region('europe-west1').firestore.document('requests/{id}')
+.onUpdate((change) => {
+    if(change.after.data().status === 'accepted'){
+        const batch = db.batch();
+        return db.collection('requests').where('bookId', '==',change.before.data().bookId).where('status', '==', 'pending').get()
+        .then((data) => {
+            data.forEach(doc => {
+                const requests = db.doc(`/requests/${doc.id}`);
+                batch.update(requests, { status: 'rejected'});
+            });
+            return batch.commit();
+        });
+    }else return true;
+});
+
+//El libro pasa a prestado
+exports.changeBookStatus = functions.region('europe-west1').firestore.document('requests/{id}')
+.onUpdate((change) => {
+    if(change.after.data().status === 'accepted'){
+        const batch = db.batch();
+        return db.collection('books').get()
+        .then((data) => {
+            data.forEach(doc => {
+                const book = db.doc(`/books/${doc.id}`);
+                if(doc.id === change.after.data().bookId){
+                    batch.update(book, {availability: 'provided'});
+                }
+            });
+            return batch.commit();
+        });
+    }else return true;
+});
+
+//Quitar el ticket
+exports.exchangeTickets = functions.region('europe-west1').firestore.document('requests/{id}')
+.onUpdate((change) => {
+    console.log(change.before.data());
+    console.log(change.after.data());
+    if(change.after.data().status === 'accepted'){
+        let users = [];
+        users.push(change.after.data().bookOwner);
+        users.push(change.after.data().userHandle);
+        const batch = db.batch();
+        return db.collection('users').where("handle", "in", users).get()
+        .then((data) => {
+            data.forEach(doc => {
+                const user = db.doc(`/users/${doc.id}`);
+                if(doc.id == change.after.data().userHandle){
+                    batch.update(user, {tickets: doc.data().tickets - 1});
+                }
+                if(doc.id == change.after.data().bookOwner){
+                    batch.update(user, {tickets: doc.data().tickets + 1});
+                }
+            });
+            return batch.commit();
+        });
+    }else return true;
 });
