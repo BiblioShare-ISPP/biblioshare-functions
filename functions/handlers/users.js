@@ -132,6 +132,8 @@ exports.getUserDetails = (req, res) => {
         requestCount: doc.data().requestCount,
         title: doc.data().title,
         userPostDate: doc.data().userPostDate,
+        availability: doc.data().availability,
+        location: doc.data().location,
         bookId: doc.id
       });
     });

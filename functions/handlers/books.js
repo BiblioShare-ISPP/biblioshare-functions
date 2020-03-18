@@ -23,7 +23,8 @@ exports.findBooks = (req, res) => {
                 userPostDate: doc.data().userPostDate,
                 owner: doc.data().owner,
                 ownerImage: doc.data().ownerImage,
-                location: doc.data().location
+                location: doc.data().location,
+                availability: doc.data().availability
             });
         });
 
@@ -45,7 +46,7 @@ exports.findBooks = (req, res) => {
         
         let filteredResults = [];
         results.forEach(book => {
-            if(book.distance > 0.25){
+            if(book.distance > 0.3){
                 filteredResults.push(
                     book.book
                 )
@@ -55,7 +56,6 @@ exports.findBooks = (req, res) => {
     })
     .catch(err => console.error(err));
 };
-
 
 //Get all books
 exports.getAllBooks = (req, res) => {

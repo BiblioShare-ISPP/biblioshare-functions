@@ -67,6 +67,9 @@ exports.acceptRequest = (req, res) => {
     .then(()=>{
         return res.json({
             requestId: req.params.requestId,
+            bookId: req.params.bookId,
+            bookOwner: req.params.bookOwner,
+            userHandle: req.params.userHandle,
             message: 'Request accepted'
         });
     })
@@ -91,6 +94,7 @@ exports.declineRequest = (req, res) => {
     .then(()=>{
         return res.json({
             requestId: req.params.requestId,
+            bookId: req.params.bookId,
             message: 'Request declined'
         });
     })
