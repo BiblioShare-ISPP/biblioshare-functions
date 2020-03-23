@@ -1,6 +1,7 @@
 const functions = require('firebase-functions');
 const app = require('express')();
 const FBAuth = require('./util/fbAuth');
+const FBAuthHall = require('./util/fbAuthHall');
 
 const cors = require('cors');
 app.use(cors({ origin: true }));
@@ -37,6 +38,19 @@ const {
     acceptRequest,
     declineRequest
 } = require('./handlers/requests');
+
+const {
+    hallSignup,
+    hallLogin,
+    getAuthenticatedHall,
+    getUsersByLocation
+} = require('./handlers/halls');
+
+//Hall routes
+app.post('/hall/signup', hallSignup);
+app.post('/hall/login', hallLogin);
+app.get('/hall', FBAuthHall, getAuthenticatedHall);
+app.get('/users/:location', getUsersByLocation);
 
 //Request routes
 app.get('/requestsByBook/:bookId', FBAuth, requestsByBook);

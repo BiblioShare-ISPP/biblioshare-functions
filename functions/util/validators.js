@@ -37,6 +37,27 @@ exports.validateSignupData = (data) => {
     }
 };
 
+exports.validateSignupDataHall = (data) => {
+    let errors = {};
+
+    if(isEmpty(data.email)){
+        errors.email = 'Must not be empty';
+    }else if(!isEmail(data.email)){
+        errors.email = 'Email must be a valid email address';
+    }else if(isEmpty(data.location)){
+        errors.location = 'Wrong location';
+    }
+
+    if(isEmpty(data.password)) errors.password = 'Must not be empty';
+    if(data.password !== data.confirmPassword) errors.confirmPassword = 'Password must match';
+    
+    return{
+        errors, 
+        valid: Object.keys(errors).length === 0 ? true : false 
+    }
+};
+
+
 exports.validateBookData = (data) => {
     let errors = {};
     if(isEmpty(data.author)) errors.author = 'Must not be empty';
