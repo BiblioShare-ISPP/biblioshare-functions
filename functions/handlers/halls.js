@@ -147,14 +147,18 @@ exports.addUserToHall = (req, res) => {
     let handle = req.params.handle;
     let location = req.params.location;
     //Añadir a miembro
-    let hallData = db.doc(`/halls/${location}`).get();
-    console.log('Antes')
-    console.log(hallData)
-    hallData.members.push(handle);
-    hallData.accounts = hallData.accounts - 1;
-    console.log(hallData)
-
-    //Quitar cuenta
-    
-    //Dar tickets
+    db.doc(`/halls/${location}`).get()
+    .then((data) => {
+        let hallDataBefore = data.data();
+        hallDataBefore.members.push(handle);
+        hallDataBefore.accounts = hallDataBefore.accounts- 1;
+        data.ref.update(hallDataBefore);
+        return hallDataBefore;
+    })
+    .then((result) => {
+        return res.status(200).json(result);
+    })
+    .catch((error) => {
+        console.error(error);
+    });    
 };

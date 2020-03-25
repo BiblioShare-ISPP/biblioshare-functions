@@ -265,3 +265,26 @@ exports.exchangeTickets = functions.region('europe-west1').firestore.document('r
         });
     }else return true;
 });
+
+
+//---------------- HALLS --------------------
+//Dar cuentas a un usuario una vez añadido al ayuntamiento
+exports.ticketsToNewUser = functions.region('europe-west1').firestore.document('halls/{location}')
+.onUpdate((change) => {
+    console.log(change.before.data());
+    console.log(change.after.data());
+    if(change.after.data().members !== change.before.data().members){
+        let arrayLenght = change.after.data().members.lenght();
+        let lastHandle = change.after.data().members[arrayLenght];
+
+        const batch = db.batch();
+        return db.collection('users').where("handle", "===", lastHandle).get()
+        .then((data) => {
+            data.forEach(doc => {
+                const user = db.doc(`/users/${doc.id}`);
+                batch.update(user, {tickets: doc.data().tickets + 5});
+            });
+            return batch.commit();
+        });
+    }else return true
+});
