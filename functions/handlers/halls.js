@@ -124,13 +124,15 @@ exports.getAuthenticatedHall = (req, res) => {
 //Get city residents
 exports.getUsersByLocation = (req, res) => {
     let location = req.params.location;
-    console.log(location)
+    let results = [];
     let handles = db.collection('users').get()
     .then(data => {
-        let results = [];
         data.forEach(doc =>{
             if(doc.data().location.toLowerCase() === location.toLowerCase()){
-                results.push(doc.data().handle);
+                results.push({
+                    handle: doc.data().handle,
+                    imageUrl: doc.data().imageUrl
+                });
             }
         })
         return results;
@@ -138,4 +140,21 @@ exports.getUsersByLocation = (req, res) => {
     .then(users => {
         return res.json(users);
     })
+};
+
+//Add a user to a hall
+exports.addUserToHall = (req, res) => {
+    let handle = req.params.handle;
+    let location = req.params.location;
+    //Añadir a miembro
+    let hallData = db.doc(`/halls/${location}`).get();
+    console.log('Antes')
+    console.log(hallData)
+    hallData.members.push(handle);
+    hallData.accounts = hallData.accounts - 1;
+    console.log(hallData)
+
+    //Quitar cuenta
+    
+    //Dar tickets
 };

@@ -29,7 +29,8 @@ const {
     addUserDetails,
     getAuthenticatedUser,
     getUserDetails,
-    markNotificationsRead
+    markNotificationsRead,
+    buyTickets
 } = require('./handlers/users');
 
 const {
@@ -43,14 +44,23 @@ const {
     hallSignup,
     hallLogin,
     getAuthenticatedHall,
-    getUsersByLocation
+    getUsersByLocation,
+    addUserToHall
 } = require('./handlers/halls');
+
+const {
+    getAllOffers
+} = require('./handlers/offers');
+
+//Offers routes
+app.get('/offers', getAllOffers);
 
 //Hall routes
 app.post('/hall/signup', hallSignup);
 app.post('/hall/login', hallLogin);
 app.get('/hall', FBAuthHall, getAuthenticatedHall);
 app.get('/users/:location', getUsersByLocation);
+app.post('/hall/:location/:handle', FBAuthHall, addUserToHall);
 
 //Request routes
 app.get('/requestsByBook/:bookId', FBAuth, requestsByBook);
@@ -78,6 +88,7 @@ app.post('/user', FBAuth, addUserDetails);
 app.get('/user', FBAuth, getAuthenticatedUser);
 app.get('/user/:handle', getUserDetails);
 app.post('/notifications', FBAuth, markNotificationsRead);
+app.post('/user/:handle/:tickets', FBAuth, buyTickets);
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
 

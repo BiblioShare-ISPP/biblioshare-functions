@@ -73,22 +73,34 @@ exports.login = (req, res) => {
     }
 
     const { valid, errors } = validateLoginData(user);
-
     if(!valid) return res.status(400).json(errors);
 
-    firebase.auth().signInWithEmailAndPassword(user.email, user.password)
-    .then(data => {
-        return data.user.getIdToken();
+    db.collection('users').get()
+    .then((data) => {
+      let result = false;
+      data.forEach((us) => {
+        if(us.data().email === user.email){
+          result = true;
+        }
+      })
+      return result;
     })
-    .then(token => {
-        return res.json({token});
-    })
-    .catch(err => {
-        console.error(err);
-        //auth/wrong-password
-        //auth/user-not-found
-        return res.status(403).json({ general: 'Wrong credentials, please try again'});
-
+    .then((result) => {
+      if(result){
+        firebase.auth().signInWithEmailAndPassword(user.email, user.password)
+        .then(data => {
+            return data.user.getIdToken();
+        })
+        .then(token => {
+            return res.json({token});
+        })
+        .catch(err => {
+            console.error(err);
+            return res.status(403).json({ general: 'Wrong credentials, please try again'});
+        });
+      }else{
+        return res.status(403).json({ general: 'There is not a user account with this email'});
+      }
     });
 };
 
@@ -253,5 +265,20 @@ exports.markNotificationsRead = (req, res) =>{
   .catch(err => {
     console.error(err);
     return res.status(500).json({ error: err.code});
+  });
+};
+
+exports.buyTickets = (req, res) => {
+  db.doc(`/users/${req.params.handle}`).get()
+  .then((doc) => {
+    if(doc.exists){
+      let total = parseInt(doc.data().tickets) + parseInt(req.params.tickets)
+      doc.ref.update({ tickets: total })
+    }else{
+      return res.status(404).json({ error: 'User not found'});
+    }
+  })
+  .then(() => {
+    return res.status(200).json("Compra realizada con éxito");
   });
 };
