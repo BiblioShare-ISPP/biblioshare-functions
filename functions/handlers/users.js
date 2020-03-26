@@ -107,10 +107,10 @@ exports.login = (req, res) => {
 //Add user details
 exports.addUserDetails = (req, res) => {
   let userDetails = reduceUserDetails(req.body);
-
+  console.log(userDetails)
   db.doc(`/users/${req.user.handle}`).update(userDetails)
   .then(() => {
-    return res.json({message: 'Details added successfully'})
+    return res.json(userDetails);
   })
   .catch(err => {
     console.error(err);
@@ -164,6 +164,19 @@ exports.getAuthenticatedUser = (req, res) => {
   .then(doc => {
     if(doc.exists){
       userData.credentials = doc.data();
+      userData.isHallMember = false;
+      db.doc(`/halls/${doc.data().location}`).get()
+      .then((docHall) => {
+        if(docHall.exists){
+          if(docHall.data().members.includes(userData.credentials.handle)){
+            userData.isHallMember = true;
+            userData.hallImage = docHall.data().imageUrl;
+            userData.description = docHall.data().description;
+            userData.image = docHall.data().image;
+          }
+        }
+      })
+      
       return db.collection('requests').where('userHandle', '==', req.user.handle).get()
     }
   })

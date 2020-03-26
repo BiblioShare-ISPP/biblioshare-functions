@@ -45,7 +45,10 @@ const {
     hallLogin,
     getAuthenticatedHall,
     getUsersByLocation,
-    addUserToHall
+    addUserToHall,
+    uploadHallAdd,
+    uploadAdImage,
+    buyAccounts
 } = require('./handlers/halls');
 
 const {
@@ -61,6 +64,9 @@ app.post('/hall/login', hallLogin);
 app.get('/hall', FBAuthHall, getAuthenticatedHall);
 app.get('/users/:location', getUsersByLocation);
 app.post('/hall/:location/:handle', FBAuthHall, addUserToHall);
+app.post('/ad', FBAuthHall, uploadHallAdd);
+app.post('/adImage', FBAuthHall, uploadAdImage);
+app.post('/accounts/:accounts', FBAuthHall, buyAccounts);
 
 //Request routes
 app.get('/requestsByBook/:bookId', FBAuth, requestsByBook);
@@ -271,14 +277,12 @@ exports.exchangeTickets = functions.region('europe-west1').firestore.document('r
 //Dar cuentas a un usuario una vez añadido al ayuntamiento
 exports.ticketsToNewUser = functions.region('europe-west1').firestore.document('halls/{location}')
 .onUpdate((change) => {
-    console.log(change.before.data());
-    console.log(change.after.data());
     if(change.after.data().members !== change.before.data().members){
-        let arrayLenght = change.after.data().members.lenght();
-        let lastHandle = change.after.data().members[arrayLenght];
-
+        const array = change.after.data().members;
+        const lastIndex = array.length - 1;
+        let lastHandle = change.after.data().members[lastIndex];
         const batch = db.batch();
-        return db.collection('users').where("handle", "===", lastHandle).get()
+        return db.collection('users').where("handle", "==", lastHandle).get()
         .then((data) => {
             data.forEach(doc => {
                 const user = db.doc(`/users/${doc.id}`);
@@ -288,3 +292,36 @@ exports.ticketsToNewUser = functions.region('europe-west1').firestore.document('
         });
     }else return true
 });
+
+//Quitar usuario de member si cambia de localización
+exports.removeMemberLocationChange = functions.region('europe-west1').firestore.document('/users/{userId}')
+.onUpdate((change) => {
+    console.log(change.before.data());
+    console.log(change.after.data());
+    if(change.before.data().location !== change.after.data().location){
+        console.log('Location has changed');
+        return db.doc(`/halls/${change.before.data().location}`).get()
+        .then((data) => {
+            if(data.exists){
+                const arrayMembers = data.data().members;
+                if(arrayMembers.includes(change.before.data().handle)){
+                    arrayMembers.remove(change.before.data().handle);
+                    return db.doc(`/halls/${data.data().location}`).update({
+                        members: arrayMembers 
+                    });
+                }
+            }
+        });
+    }else return true;
+});
+
+Array.prototype.remove = function() {
+    var what, a = arguments, L = a.length, ax;
+    while (L && this.length){
+        what = a[--L];
+        while((ax = this.indexOf(what)) !== -1){
+            this.splice(ax, 1);
+        }
+    }
+    return this;
+};

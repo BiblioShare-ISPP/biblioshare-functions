@@ -91,3 +91,15 @@ exports.reduceUserDetails = (data) =>{
 
     return userDetails;
 };
+
+exports.validateAddDetails = (data) =>{
+    let errors = {};
+
+    if(isEmpty(data.description)) errors.description = 'Must not be empty';
+    if(isEmpty(data.image)) errors.image = 'Must upload an image';
+
+    return{
+        errors, 
+        valid: Object.keys(errors).length === 0 ? true : false 
+    }
+};

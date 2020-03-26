@@ -1,9 +1,9 @@
-const { db } = require('../util/admin');
+const { admin, db } = require('../util/admin');
 
 const firebase = require('firebase');
 const config = require('../util/config');
 
-const { validateSignupDataHall, validateLoginData  } = require('../util/validators');
+const { validateSignupDataHall, validateLoginData, validateAddDetails } = require('../util/validators');
 
 //Sign up
 exports.hallSignup = (req, res) => {
@@ -43,6 +43,8 @@ exports.hallSignup = (req, res) => {
             accounts: newHall.accounts,
             location: newHall.location,
             members: [],
+            description: 'Anuncio',
+            image: `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/AdImage.png?alt=media`,
             hallId
         };
         return db.doc(`/halls/${newHall.location}`).set(hallCredentials);
@@ -162,3 +164,95 @@ exports.addUserToHall = (req, res) => {
         console.error(error);
     });    
 };
+
+//Subida de anuncio
+exports.uploadHallAdd = (req, res) => { 
+    const location = req.hall.location;
+    const newAdd ={
+        description: req.body.description,
+        image: req.body.image
+    };
+    
+    const { valid, errors } = validateAddDetails(newAdd);
+
+    if(!valid) return res.status(400).json(errors);
+
+    db.doc(`/halls/${location}`).update(newAdd)
+    .then(() => {
+      return res.json(newAdd);
+    })
+    .catch(err => {
+      console.error(err);
+      return res.status(500).json({error: err.code})
+    });
+};
+
+
+// Upload a image for hall ad
+exports.uploadAdImage = (req, res) => {
+    const BusBoy = require('busboy');
+    const path = require('path');
+    const os = require('os');
+    const fs = require('fs');
+  
+    const busboy = new BusBoy({ headers: req.headers });
+  
+    let imageToBeUploaded = {};
+    let imageFileName;
+  
+    busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+      console.log(fieldname, file, filename, encoding, mimetype);
+      if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
+        return res.status(400).json({ error: 'Wrong file type submitted' });
+      }
+      // my.image.png => ['my', 'image', 'png']
+      const imageExtension = filename.split('.')[filename.split('.').length - 1];
+      // 32756238461724837.png
+      imageFileName = `${Math.round(
+        Math.random() * 1000000000000
+      ).toString()}.${imageExtension}`;
+      const filepath = path.join(os.tmpdir(), imageFileName);
+      imageToBeUploaded = { filepath, mimetype };
+      file.pipe(fs.createWriteStream(filepath));
+    });
+    busboy.on('finish', () => {
+      admin
+        .storage()
+        .bucket(`${config.storageBucket}`)
+        .upload(imageToBeUploaded.filepath, {
+          resumable: false,
+          metadata: {
+            metadata: {
+              contentType: imageToBeUploaded.mimetype
+            }
+          }
+        })
+        .then(() => {
+          const image = `https://firebasestorage.googleapis.com/v0/b/${
+            config.storageBucket
+          }/o/${imageFileName}?alt=media`;
+          return res.json({image: image});
+        })
+        .catch((err) => {
+          console.error(err);
+          return res.status(500).json({ error: 'something went wrong' });
+        });
+    });
+    busboy.end(req.rawBody);
+};
+
+//Buy accounts
+exports.buyAccounts = (req, res) => {
+    db.doc(`/halls/${req.hall.location}`).get()
+    .then((doc) => {
+      if(doc.exists){
+        let total = parseInt(doc.data().accounts) + parseInt(req.params.accounts)
+        doc.ref.update({ accounts: total })
+      }else{
+        return res.status(404).json({ error: 'Hall not found'});
+      }
+    })
+    .then(() => {
+      return res.status(200).json("Compra realizada con éxito");
+    });
+  };
