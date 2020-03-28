@@ -165,6 +165,7 @@ exports.addUserToHall = (req, res) => {
     });    
 };
 
+
 //Subida de anuncio
 exports.uploadHallAdd = (req, res) => { 
     const location = req.hall.location;
@@ -255,4 +256,82 @@ exports.buyAccounts = (req, res) => {
     .then(() => {
       return res.status(200).json("Compra realizada con éxito");
     });
-  };
+};
+
+//Update hall profile image
+exports.uploadHallImage = (req, res) => {
+  const BusBoy = require('busboy');
+  const path = require('path');
+  const os = require('os');
+  const fs = require('fs');
+
+  const busboy = new BusBoy({ headers: req.headers });
+
+  let imageToBeUploaded = {};
+  let imageFileName;
+
+  busboy.on('file', (fieldname, file, filename, encoding, mimetype) => {
+    console.log(fieldname, file, filename, encoding, mimetype);
+    if (mimetype !== 'image/jpeg' && mimetype !== 'image/png') {
+      return res.status(400).json({ error: 'Wrong file type submitted' });
+    }
+    // my.image.png => ['my', 'image', 'png']
+    const imageExtension = filename.split('.')[filename.split('.').length - 1];
+    // 32756238461724837.png
+    imageFileName = `${Math.round(
+      Math.random() * 1000000000000
+    ).toString()}.${imageExtension}`;
+    const filepath = path.join(os.tmpdir(), imageFileName);
+    imageToBeUploaded = { filepath, mimetype };
+    file.pipe(fs.createWriteStream(filepath));
+  });
+  busboy.on('finish', () => {
+    admin
+      .storage()
+      .bucket(`${config.storageBucket}`)
+      .upload(imageToBeUploaded.filepath, {
+        resumable: false,
+        metadata: {
+          metadata: {
+            contentType: imageToBeUploaded.mimetype
+          }
+        }
+      })
+      .then(() => {
+        const imageUrl = `https://firebasestorage.googleapis.com/v0/b/${
+          config.storageBucket
+        }/o/${imageFileName}?alt=media`;
+        return db.doc(`/halls/${req.hall.location}`).update({ imageUrl });
+      })
+      .then(() => {
+        return res.json({ message: 'image uploaded successfully' });
+      })
+      .catch((err) => {
+        console.error(err);
+        return res.status(500).json({ error: 'something went wrong' });
+      });
+  });
+  busboy.end(req.rawBody);
+};
+
+//Number of books by member
+exports.booksPerMember = async (req, res) => {
+  const members = req.hall.members;
+  const doc = await db.doc(`/halls/${req.hall.location}`).get();
+
+  if (!doc) console.err('No existe la referencia indicada');
+
+    let stats = [];
+
+    for (const member of members) {
+      const snap = await db.collection('/books').where('owner', '==', member).get();
+
+      if (!snap) {
+        console.err('Otro error con la descripción que quieras');
+        continue;
+      }
+      
+      stats = [...stats, { user: member, books: snap.size }]; 
+    }
+    return res.json(stats);
+};

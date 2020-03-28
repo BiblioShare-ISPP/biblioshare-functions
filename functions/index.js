@@ -7,8 +7,9 @@ const cors = require('cors');
 app.use(cors({ origin: true }));
 
 const { db } = require('./util/admin');
-
+const config = require('./util/config');
 const firebase = require('firebase');
+const nodemailer = require('nodemailer');
 
 const {
     getAllBooks,
@@ -48,7 +49,9 @@ const {
     addUserToHall,
     uploadHallAdd,
     uploadAdImage,
-    buyAccounts
+    buyAccounts,
+    booksPerMember,
+    uploadHallImage
 } = require('./handlers/halls');
 
 const {
@@ -67,6 +70,9 @@ app.post('/hall/:location/:handle', FBAuthHall, addUserToHall);
 app.post('/ad', FBAuthHall, uploadHallAdd);
 app.post('/adImage', FBAuthHall, uploadAdImage);
 app.post('/accounts/:accounts', FBAuthHall, buyAccounts);
+app.get('/booksPerMember', FBAuthHall, booksPerMember);
+app.post('/hall/image',FBAuthHall, uploadHallImage);
+
 
 //Request routes
 app.get('/requestsByBook/:bookId', FBAuth, requestsByBook);
@@ -216,6 +222,44 @@ exports.onBookDelete = functions.region('europe-west1').firestore.document('/boo
 exports.onAcceptRequest = functions.region('europe-west1').firestore.document('requests/{id}')
 .onUpdate((change) => {
     if(change.after.data().status === 'accepted'){
+        let ownerEmail = '';
+        db.doc(`/users/${change.after.data().bookOwner}`).get()
+        .then((data) => {
+            return data.data().email;
+        })
+        .then((email) => {
+            ownerEmail = email;
+        })
+        let handleEmail = '';
+        db.doc(`/users/${change.after.data().userHandle}`).get()
+        .then((data) => {
+            return data.data().email;
+        })
+        .then((email) => {
+            handleEmail = email;
+        })
+        console.log(ownerEmail);
+        console.log(handleEmail);
+        var transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: `${config.user}`,
+              pass: `${config.pass}`
+            }
+        });
+        var mailOptions = {
+            from: `${config.user}`,
+            to: `${ownerEmail},${handleEmail}`,
+            subject: 'Book request accepted',
+            text: 'The request for the requested book has been accepted by the owner'
+        };
+        transporter.sendMail(mailOptions, function(error, info){
+            if (error) {
+              console.log(error);
+            } else {
+              console.log('Email sent: ' + info.response);
+            }
+        });
         const batch = db.batch();
         return db.collection('requests').where('bookId', '==',change.before.data().bookId).where('status', '==', 'pending').get()
         .then((data) => {
