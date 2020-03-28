@@ -222,44 +222,6 @@ exports.onBookDelete = functions.region('europe-west1').firestore.document('/boo
 exports.onAcceptRequest = functions.region('europe-west1').firestore.document('requests/{id}')
 .onUpdate((change) => {
     if(change.after.data().status === 'accepted'){
-        let ownerEmail = '';
-        db.doc(`/users/${change.after.data().bookOwner}`).get()
-        .then((data) => {
-            return data.data().email;
-        })
-        .then((email) => {
-            ownerEmail = email;
-        })
-        let handleEmail = '';
-        db.doc(`/users/${change.after.data().userHandle}`).get()
-        .then((data) => {
-            return data.data().email;
-        })
-        .then((email) => {
-            handleEmail = email;
-        })
-        console.log(ownerEmail);
-        console.log(handleEmail);
-        var transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-              user: `${config.user}`,
-              pass: `${config.pass}`
-            }
-        });
-        var mailOptions = {
-            from: `${config.user}`,
-            to: `${ownerEmail},${handleEmail}`,
-            subject: 'Book request accepted',
-            text: 'The request for the requested book has been accepted by the owner'
-        };
-        transporter.sendMail(mailOptions, function(error, info){
-            if (error) {
-              console.log(error);
-            } else {
-              console.log('Email sent: ' + info.response);
-            }
-        });
         const batch = db.batch();
         return db.collection('requests').where('bookId', '==',change.before.data().bookId).where('status', '==', 'pending').get()
         .then((data) => {
@@ -313,6 +275,58 @@ exports.exchangeTickets = functions.region('europe-west1').firestore.document('r
             });
             return batch.commit();
         });
+    }else return true;
+});
+
+//Se envia correo a los involucrados
+exports.sendEmail = functions.region('europe-west1').firestore.document('requests/{id}')
+.onUpdate(async (change) => {
+    if(change.after.data().status === 'accepted'){
+        let requestInfo = change.after.data();
+        let ownerEmail = await db.doc(`/users/${change.after.data().bookOwner}`).get()
+        .then((data) => {
+            return data.data().email;
+        })
+        let handleEmail = await db.doc(`/users/${change.after.data().userHandle}`).get()
+        .then((data) => {
+            return data.data().email;
+        })
+        console.log(ownerEmail);
+        console.log(handleEmail);
+        var transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+                user: `${config.user}`,
+                pass: `${config.pass}`
+            }
+        });
+        var mailOptionsOwner = {
+            from: `${config.user}`,
+            to: `${ownerEmail}`,
+            subject: 'BiblioShare - Request accepted',
+            html: `You have accepted the request for <b>${requestInfo.title}</b>, please contact with <b>${requestInfo.userHandle}</b> at ${handleEmail}.`
+        };
+        var mailOptionsHandle = {
+            from: `${config.user}`,
+            to: `${handleEmail}`,
+            subject: 'BiblioShare - Request accepted',
+            html: `Your request for <b>${requestInfo.title}</b> has been accepted, please contact with the book owner <b>${requestInfo.bookOwner}</b> at ${ownerEmail}.`
+        };
+        transporter.sendMail(mailOptionsOwner, function(error, info){
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
+        transporter.sendMail(mailOptionsHandle, function(error, info){
+            if (error) {
+                console.log(error);
+            } else {
+                console.log('Email sent: ' + info.response);
+            }
+        });
+        return true;
     }else return true;
 });
 
