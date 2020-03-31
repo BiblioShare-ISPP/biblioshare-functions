@@ -255,7 +255,10 @@ exports.uploadImage = (req, res) => {
           return db.doc(`/users/${req.user.handle}`).update({ imageUrl });
         })
         .then(() => {
-          return res.json({ message: 'image uploaded successfully' });
+          const image = `https://firebasestorage.googleapis.com/v0/b/${
+            config.storageBucket
+          }/o/${imageFileName}?alt=media`;
+          return res.json({ imageUrl: image });
         })
         .catch((err) => {
           console.error(err);
