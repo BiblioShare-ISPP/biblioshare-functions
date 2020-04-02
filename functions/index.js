@@ -135,6 +135,7 @@ exports.deleteNotificationOnCancelRequest = functions.region('europe-west1').fir
 
 });
 
+/*
 exports.createNotificationOnComment = functions.region('europe-west1').firestore.document('comments/{id}')
 .onCreate((snapshot) => {
     return db.doc(`/books/${snapshot.data().bookId}`).get()
@@ -155,7 +156,7 @@ exports.createNotificationOnComment = functions.region('europe-west1').firestore
         return;
     });
 });
-
+*/
 exports.onUserImageChange = functions.region('europe-west1').firestore.document('/users/{userId}')
 .onUpdate((change) => {
     console.log(change.before.data());
@@ -330,7 +331,27 @@ exports.sendEmail = functions.region('europe-west1').firestore.document('request
     }else return true;
 });
 
+//Se borran la notificación de request al cambiar de estado
+exports.markNotificationsReadOnChange = functions.region('europe-west1').firestore.document('requests/{id}')
+.onUpdate(async (change) => {
+    if(change.before.data().status !== change.after.data().status ){
+        //Se busca la notificación y se marca como leida
+        let userHandle = change.before.data().userHandle;
+        let bookId = change.before.data().bookId;
+        const batch = db.batch();
+        return db.collection('notifications').get()
+        .then((data) => {
+            data.forEach(doc => {
+                const notification = db.doc(`/notifications/${doc.id}`);
+                if((doc.data().sender === userHandle) && (doc.data().bookId === bookId)){
+                    batch.delete(notification);
+                }
+            });
+            return batch.commit();
+        });
 
+    }else return true;
+});
 //---------------- HALLS --------------------
 //Dar cuentas a un usuario una vez añadido al ayuntamiento
 exports.ticketsToNewUser = functions.region('europe-west1').firestore.document('halls/{location}')
