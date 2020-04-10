@@ -63,13 +63,15 @@ exports.acceptRequest = (req, res) => {
             return res.status(409).json({ error: 'You can only accept pending requests'});
         }
         doc.ref.update({ status: "accepted"})
+        return doc;
     })
-    .then(()=>{
+    .then((requestData)=>{
         return res.json({
             requestId: req.params.requestId,
-            bookId: req.params.bookId,
-            bookOwner: req.params.bookOwner,
-            userHandle: req.params.userHandle,
+            bookId: requestData.data().bookId,
+            bookOwner: requestData.data().bookOwner,
+            userHandle: requestData.data().userHandle,
+            price: requestData.data().price,
             message: 'Request accepted'
         });
     })
