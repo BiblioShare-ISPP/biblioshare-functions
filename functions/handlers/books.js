@@ -212,8 +212,6 @@ exports.commentOnBook = (req, res)=>{
 
 //Request a book
 exports.requestBook = (req, res) =>{
-    let userTickets = req.user.tickets;
-
     const requestDocument = db.collection('requests').where('userHandle', '==', req.user.handle)
     .where('bookId', '==', req.params.bookId).limit(1);
 
@@ -239,6 +237,7 @@ exports.requestBook = (req, res) =>{
                 userHandle: req.user.handle,
                 title: bookData.title,
                 cover: bookData.cover,
+                price: ((new Date().getFullYear-bookData.publishedDate)>=2)?1:2,
                 status: "pending",
                 createdAt: new Date().toISOString()
             })

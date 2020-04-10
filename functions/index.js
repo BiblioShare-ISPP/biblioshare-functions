@@ -266,10 +266,10 @@ exports.exchangeTickets = functions.region('europe-west1').firestore.document('r
             data.forEach(doc => {
                 const user = db.doc(`/users/${doc.id}`);
                 if(doc.id == change.after.data().userHandle){
-                    batch.update(user, {tickets: doc.data().tickets - 1});
+                    batch.update(user, {tickets: doc.data().tickets - change.after.data().price});
                 }
                 if(doc.id == change.after.data().bookOwner){
-                    batch.update(user, {tickets: doc.data().tickets + 1});
+                    batch.update(user, {tickets: doc.data().tickets + change.after.data().price});
                 }
             });
             return batch.commit();
