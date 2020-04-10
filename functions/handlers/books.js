@@ -30,12 +30,25 @@ exports.findBooks = (req, res) => {
         });
 
         let results = [];
-        var distanceTitle, distanceAuthor, total;
-
+        console.log(req.params.query);
         books.forEach(book => {
-            distanceTitle = stringSimilarity.compareTwoStrings(query.toLowerCase(), book.title.toLowerCase());
-            distanceAuthor = stringSimilarity.compareTwoStrings(query.toLowerCase(), book.author.toLowerCase());
-            total = distanceTitle + distanceAuthor;
+            var distanceTitle = 0;
+            var distanceAuthor = 0;
+            var total = 0;
+            var queryArray = query.toLowerCase().split(/(\s+)/);
+            var titleArray = book.title.toLowerCase().split(/(\s+)/);
+            var authorArray = book.author.toLowerCase().split(/(\s+)/);
+            for(var i = 0; i < queryArray.length; i++){
+                for(var j = 0; j < titleArray.length; j++){
+                    var auxDistanceTitle = stringSimilarity.compareTwoStrings(queryArray[i], titleArray[j]);
+                    distanceTitle = auxDistanceTitle > distanceTitle ? auxDistanceTitle : distanceTitle;
+                }
+                for(var j = 0; j < authorArray.length; j++){
+                    var auxDistanceAuthor = stringSimilarity.compareTwoStrings(queryArray[i], authorArray[j]);
+                    distanceAuthor = auxDistanceAuthor > distanceAuthor ? auxDistanceAuthor : distanceAuthor;
+                }
+            }
+            total = distanceTitle > distanceAuthor ? distanceTitle : distanceAuthor;
             results.push({
                 book: book,
                 distance: total
@@ -47,7 +60,7 @@ exports.findBooks = (req, res) => {
         
         let filteredResults = [];
         results.forEach(book => {
-            if(book.distance > 0.3){
+            if(book.distance > 0.4){
                 filteredResults.push(
                     book.book
                 )
