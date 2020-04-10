@@ -109,17 +109,35 @@ exports.postOneBook = (req, res) =>{
 
     if(!valid) return res.status(400).json(errors);
 
-    db
-    .collection('books')
-    .add(newBook)
-    .then((doc) => {
-        const resBook = newBook;
-        resBook.bookId = doc.id;
-        res.json(resBook);
+    const Url = 'https://www.googleapis.com/books/v1/volumes?q='+newBook.title;
+    fetch(Url)
+    .then((data) => {
+        return data.json();
     })
-    .catch((err) => {
-        res.status(500).json({error: 'something went wrong'});
-        console.error(err);
+    .then((res)=>{
+        if(res.totalItems > 0){
+            if(res.items.length > 0){
+                newBook.publishedDate = res.items[0].volumeInfo.publishedDate.split("-")[0];
+            }else{
+                newBook.publishedDate = 1900;
+            } 
+        }else{
+            newBook.publishedDate = 1900;
+        }
+    })
+    .then(()=>{
+        db
+        .collection('books')
+        .add(newBook)
+        .then((doc) => {
+            const resBook = newBook;
+            resBook.bookId = doc.id;
+            res.json(resBook);
+        })
+        .catch((err) => {
+            res.status(500).json({error: 'something went wrong'});
+            console.error(err);
+        });
     });
 };
 
