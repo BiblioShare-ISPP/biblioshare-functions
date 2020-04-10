@@ -19,7 +19,7 @@ exports.findBooks = (req, res) => {
                 bookId: doc.id,
                 author: doc.data().author,
                 cover: doc.data().cover,
-                publishedDate: doc.data().publishedDate,
+                price: doc.data().price,
                 title: doc.data().title,
                 userPostDate: doc.data().userPostDate,
                 owner: doc.data().owner,
@@ -83,7 +83,7 @@ exports.getAllBooks = (req, res) => {
                 bookId: doc.id,
                 author: doc.data().author,
                 cover: doc.data().cover,
-                publishedDate: doc.data().publishedDate,
+                price: doc.data().price,
                 title: doc.data().title,
                 userPostDate: doc.data().userPostDate,
                 owner: doc.data().owner,
@@ -104,7 +104,7 @@ exports.postOneBook = (req, res) =>{
         author: req.body.author,
         cover: req.body.cover,
         title: req.body.title,
-        publishedDate: req.body.publishedDate,
+        price: 1,
         userPostDate: new Date().toISOString(),
         owner: req.user.handle,
         location: (req.user.location == null) ? "" : req.user.location,
@@ -128,14 +128,21 @@ exports.postOneBook = (req, res) =>{
         return data.json();
     })
     .then((res)=>{
+        var publishedDate = 1900;
         if(res.totalItems > 0){
             if(res.items.length > 0){
-                newBook.publishedDate = res.items[0].volumeInfo.publishedDate.split("-")[0];
+                publishedDate = res.items[0].volumeInfo.publishedDate.substring(0, 4);
             }else{
-                newBook.publishedDate = 1900;
+                publishedDate = 1900;
             } 
         }else{
-            newBook.publishedDate = 1900;
+            publishedDate = 1900;
+        }
+        return publishedDate;
+    })
+    .then((year)=>{
+        if(new Date().getFullYear()-year <= 1){
+            newBook.price = 2;
         }
     })
     .then(()=>{
@@ -151,6 +158,10 @@ exports.postOneBook = (req, res) =>{
             res.status(500).json({error: 'something went wrong'});
             console.error(err);
         });
+    })
+    .catch((err) => {
+        res.status(500).json({error: 'something went wrong'});
+        console.error(err);
     });
 };
 
@@ -237,7 +248,7 @@ exports.requestBook = (req, res) =>{
                 userHandle: req.user.handle,
                 title: bookData.title,
                 cover: bookData.cover,
-                price: ((new Date().getFullYear-bookData.publishedDate)>=2)?1:2,
+                price: bookData.price,
                 status: "pending",
                 createdAt: new Date().toISOString()
             })
@@ -332,7 +343,7 @@ exports.getBooksByUser = (req, res) => {
             books.push({
                 bookId: doc.id,
                 author: doc.data().author,
-                publishedDate: doc.data().publishedDate,
+                price: doc.data().price,
                 cover: doc.data().cover,
                 title: doc.data().title,
                 userPostDate: doc.data().userPostDate,
