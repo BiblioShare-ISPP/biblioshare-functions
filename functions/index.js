@@ -30,7 +30,6 @@ const {
     addUserDetails,
     getAuthenticatedUser,
     getUserDetails,
-    markNotificationsRead,
     buyTickets
 } = require('./handlers/users');
 
@@ -99,7 +98,6 @@ app.post('/user/image',FBAuth, uploadImage);
 app.post('/user', FBAuth, addUserDetails);
 app.get('/user', FBAuth, getAuthenticatedUser);
 app.get('/user/:handle', getUserDetails);
-app.post('/notifications', FBAuth, markNotificationsRead);
 app.post('/user/:handle/:tickets', FBAuth, buyTickets);
 
 exports.api = functions.region('europe-west1').https.onRequest(app);

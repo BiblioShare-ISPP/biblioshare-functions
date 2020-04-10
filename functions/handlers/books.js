@@ -19,6 +19,7 @@ exports.findBooks = (req, res) => {
                 bookId: doc.id,
                 author: doc.data().author,
                 cover: doc.data().cover,
+                publishedDate: doc.data().publishedDate,
                 title: doc.data().title,
                 userPostDate: doc.data().userPostDate,
                 owner: doc.data().owner,
@@ -69,6 +70,7 @@ exports.getAllBooks = (req, res) => {
                 bookId: doc.id,
                 author: doc.data().author,
                 cover: doc.data().cover,
+                publishedDate: doc.data().publishedDate,
                 title: doc.data().title,
                 userPostDate: doc.data().userPostDate,
                 owner: doc.data().owner,
@@ -89,6 +91,7 @@ exports.postOneBook = (req, res) =>{
         author: req.body.author,
         cover: req.body.cover,
         title: req.body.title,
+        publishedDate: req.body.publishedDate,
         userPostDate: new Date().toISOString(),
         owner: req.user.handle,
         location: (req.user.location == null) ? "" : req.user.location,
@@ -97,7 +100,7 @@ exports.postOneBook = (req, res) =>{
         commentCount: 0,
         availability: "available"
     };
-
+    console.log(newBook);
     if(newBook.cover.trim() === ''){
         newBook.cover = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/no-cover.jpg?alt=media`;
     }
@@ -299,6 +302,7 @@ exports.getBooksByUser = (req, res) => {
             books.push({
                 bookId: doc.id,
                 author: doc.data().author,
+                publishedDate: doc.data().publishedDate,
                 cover: doc.data().cover,
                 title: doc.data().title,
                 userPostDate: doc.data().userPostDate,
