@@ -269,6 +269,39 @@ exports.requestBook = (req, res) =>{
     })
 };
 
+//Change book to available again
+exports.changeToAvailable = (req, res) =>{
+    const bookDocument = db.doc(`/books/${req.params.bookId}`);
+
+    bookDocument.get()
+    .then(doc => {
+        if(doc.data().availability === 'provided'){
+            return bookDocument.get();
+        }else{
+            return res.status(404).json({ error: 'Book must be provided'});
+        }
+    })
+    .then(() => {
+        return bookDocument.update({ availability: 'available' });
+    })
+    .then(() => {
+        return db.collection('requests').where('bookId', '==', req.params.bookId).get().then(function(querySnapshot) {
+            querySnapshot.forEach(function(doc) {
+              doc.ref.delete();
+            });
+          });
+    
+    })
+    .then(()=>{
+        return res.json(req.params.bookId);
+    })
+    .catch(err => {
+        console.error(err);
+        res.status(500).json({ error: err.code});
+    })
+};
+
+
 //Cancel a book request
 exports.cancelRequestBook = (req, res) => {
     const requestDocument = db.collection('requests').where('userHandle', '==', req.user.handle)

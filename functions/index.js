@@ -21,7 +21,8 @@ const {
     deleteBook,
     getBooksByUser,
     uploadCover,
-    findBooks
+    findBooks,
+    changeToAvailable
 } = require('./handlers/books');
 const { 
     signup, 
@@ -86,6 +87,7 @@ app.post('/book', FBAuth, postOneBook);
 app.get('/book/:bookId', getBook);
 app.delete('/book/:bookId', FBAuth, deleteBook);
 app.get('/book/:bookId/request', FBAuth, requestBook);
+app.get('/book/:bookId/available', FBAuth, changeToAvailable);
 app.get('/book/:bookId/cancelRequest', FBAuth, cancelRequestBook);
 app.post('/book/:bookId/comment', FBAuth, commentOnBook);
 app.get('/books/:handle', getBooksByUser);
