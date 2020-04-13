@@ -1,10 +1,12 @@
 const functions = require('firebase-functions');
-const app = require('express')();
+var express = require('express');
 const FBAuth = require('./util/fbAuth');
 const FBAuthHall = require('./util/fbAuthHall');
 
-const cors = require('cors');
-app.use(cors({ origin: '*', credentials: true }));
+var cors = require('cors');
+var app = express();
+app.use(cors({ origin: true}));
+
 
 const { db } = require('./util/admin');
 const config = require('./util/config');
