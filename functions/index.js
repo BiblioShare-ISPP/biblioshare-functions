@@ -4,7 +4,7 @@ const FBAuth = require('./util/fbAuth');
 const FBAuthHall = require('./util/fbAuthHall');
 
 const cors = require('cors');
-app.use(cors({ origin: true }));
+app.use(cors({ origin: '*', credentials: true }));
 
 const { db } = require('./util/admin');
 const config = require('./util/config');
@@ -13,6 +13,7 @@ const nodemailer = require('nodemailer');
 
 const {
     getAllBooks,
+    getAllBooksByLocation,
     postOneBook,
     getBook,
     commentOnBook,
@@ -83,6 +84,7 @@ app.get('/request/:requestId/decline', FBAuth, declineRequest);
 //Books routes
 app.get('/search/:query', findBooks);
 app.get('/books', getAllBooks);
+app.get('/location', FBAuth, getAllBooksByLocation);
 app.post('/book', FBAuth, postOneBook);
 app.get('/book/:bookId', getBook);
 app.delete('/book/:bookId', FBAuth, deleteBook);

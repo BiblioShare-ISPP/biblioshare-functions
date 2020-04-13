@@ -97,6 +97,33 @@ exports.getAllBooks = (req, res) => {
     .catch(err => console.error(err));
 };
 
+//Get all books by user location
+exports.getAllBooksByLocation = (req, res) => {
+    db.collection('books')
+    .where('location', '==', req.user.location)
+    .orderBy('userPostDate', 'desc')
+    .get()
+    .then(data => {
+        let books = [];
+        data.forEach(doc => {
+            books.push({
+                bookId: doc.id,
+                author: doc.data().author,
+                cover: doc.data().cover,
+                price: doc.data().price,
+                title: doc.data().title,
+                userPostDate: doc.data().userPostDate,
+                owner: doc.data().owner,
+                ownerImage: doc.data().ownerImage,
+                location: doc.data().location,
+                availability: doc.data().availability
+            });
+        });
+        return res.json(books);
+    })
+    .catch(err => console.error(err));
+};
+
 //Post a book
 exports.postOneBook = (req, res) =>{
     console.log(req.body);
