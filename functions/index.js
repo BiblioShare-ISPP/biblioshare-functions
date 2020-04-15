@@ -6,7 +6,6 @@ const FBAuthHall = require('./util/fbAuthHall');
 var cors = require('cors');
 var app = express();
 app.use(cors({ origin: true}));
-app.options('*', cors());
 
 const { db } = require('./util/admin');
 const config = require('./util/config');
