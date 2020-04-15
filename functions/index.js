@@ -5,13 +5,7 @@ const FBAuthHall = require('./util/fbAuthHall');
 
 var cors = require('cors');
 var app = express();
-app.use(cors({ origin: true}));
-
-app.use(function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-    next();
-});
+app.use(cors());
 
 const { db } = require('./util/admin');
 const config = require('./util/config');
@@ -114,8 +108,7 @@ app.post('/user/:handle/:tickets', FBAuth, buyTickets);
 exports.api = functions.region('europe-west1').https.onRequest(app);
 
 //Notifications
-exports.createNotificationOnRequest = functions.region('europe-west1').firestore.document('requests/{id}')
-    .onCreate((snapshot) => {
+exports.createNotificationOnRequest = functions.region('europe-west1').firestore.document('requests/{id}').onCreate((snapshot) => {
         return db.doc(`/books/${snapshot.data().bookId}`).get()
             .then((doc) => {
                 if(doc.exists && doc.data().userHandle !== snapshot.data().userHandle){
@@ -133,8 +126,7 @@ exports.createNotificationOnRequest = functions.region('europe-west1').firestore
 
 });
 
-exports.deleteNotificationOnCancelRequest = functions.region('europe-west1').firestore.document('requests/{id}')
-.onDelete((snapshot) => {
+exports.deleteNotificationOnCancelRequest = functions.region('europe-west1').firestore.document('requests/{id}').onDelete((snapshot) => {
     return db.doc(`/notifications/${snapshot.id}`)
     .delete()
     .catch(err => {
@@ -166,8 +158,7 @@ exports.createNotificationOnComment = functions.region('europe-west1').firestore
     });
 });
 */
-exports.onUserImageChange = functions.region('europe-west1').firestore.document('/users/{userId}')
-.onUpdate((change) => {
+exports.onUserImageChange = functions.region('europe-west1').firestore.document('/users/{userId}').onUpdate((change) => {
     console.log(change.before.data());
     console.log(change.after.data());
     if(change.before.data().imageUrl !== change.after.data().imageUrl){
@@ -184,8 +175,7 @@ exports.onUserImageChange = functions.region('europe-west1').firestore.document(
     }else return true;
 });
 
-exports.onUserLocationChange = functions.region('europe-west1').firestore.document('/users/{userId}')
-.onUpdate((change) => {
+exports.onUserLocationChange = functions.region('europe-west1').firestore.document('/users/{userId}').onUpdate((change) => {
     console.log(change.before.data());
     console.log(change.after.data());
     if(change.before.data().location !== change.after.data().location){
@@ -202,8 +192,7 @@ exports.onUserLocationChange = functions.region('europe-west1').firestore.docume
     }else return true;
 });
 
-exports.onBookDelete = functions.region('europe-west1').firestore.document('/books/{bookId}')
-.onDelete((snapshot, context) => {
+exports.onBookDelete = functions.region('europe-west1').firestore.document('/books/{bookId}').onDelete((snapshot, context) => {
     const bookId = context.params.bookId;
     const batch = db.batch();
     return db.collection('comments').where('bookId', '==', bookId).get()
@@ -229,8 +218,7 @@ exports.onBookDelete = functions.region('europe-west1').firestore.document('/boo
 });
 
 //Se rechazan las otras peticiones
-exports.onAcceptRequest = functions.region('europe-west1').firestore.document('requests/{id}')
-.onUpdate((change) => {
+exports.onAcceptRequest = functions.region('europe-west1').firestore.document('requests/{id}').onUpdate((change) => {
     if(change.after.data().status === 'accepted'){
         const batch = db.batch();
         return db.collection('requests').where('bookId', '==',change.before.data().bookId).where('status', '==', 'pending').get()
@@ -245,8 +233,7 @@ exports.onAcceptRequest = functions.region('europe-west1').firestore.document('r
 });
 
 //El libro pasa a prestado
-exports.changeBookStatus = functions.region('europe-west1').firestore.document('requests/{id}')
-.onUpdate((change) => {
+exports.changeBookStatus = functions.region('europe-west1').firestore.document('requests/{id}').onUpdate((change) => {
     if(change.after.data().status === 'accepted'){
         const batch = db.batch();
         return db.collection('books').get()
@@ -263,8 +250,7 @@ exports.changeBookStatus = functions.region('europe-west1').firestore.document('
 });
 
 //Quitar el ticket
-exports.exchangeTickets = functions.region('europe-west1').firestore.document('requests/{id}')
-.onUpdate((change) => {
+exports.exchangeTickets = functions.region('europe-west1').firestore.document('requests/{id}').onUpdate((change) => {
     console.log(change.before.data());
     console.log(change.after.data());
     if(change.after.data().status === 'accepted'){
@@ -289,8 +275,7 @@ exports.exchangeTickets = functions.region('europe-west1').firestore.document('r
 });
 
 //Se envia correo a los involucrados
-exports.sendEmail = functions.region('europe-west1').firestore.document('requests/{id}')
-.onUpdate(async (change) => {
+exports.sendEmail = functions.region('europe-west1').firestore.document('requests/{id}').onUpdate(async (change) => {
     if(change.after.data().status === 'accepted'){
         let requestInfo = change.after.data();
         let ownerEmail = await db.doc(`/users/${change.after.data().bookOwner}`).get()
@@ -341,8 +326,7 @@ exports.sendEmail = functions.region('europe-west1').firestore.document('request
 });
 
 //Se borran la notificación de request al cambiar de estado
-exports.markNotificationsReadOnChange = functions.region('europe-west1').firestore.document('requests/{id}')
-.onUpdate(async (change) => {
+exports.markNotificationsReadOnChange = functions.region('europe-west1').firestore.document('requests/{id}').onUpdate(async (change) => {
     if(change.before.data().status !== change.after.data().status ){
         //Se busca la notificación y se marca como leida
         let userHandle = change.before.data().userHandle;
@@ -363,8 +347,7 @@ exports.markNotificationsReadOnChange = functions.region('europe-west1').firesto
 });
 //---------------- HALLS --------------------
 //Dar cuentas a un usuario una vez añadido al ayuntamiento
-exports.ticketsToNewUser = functions.region('europe-west1').firestore.document('halls/{location}')
-.onUpdate((change) => {
+exports.ticketsToNewUser = functions.region('europe-west1').firestore.document('halls/{location}').onUpdate((change) => {
     if(change.after.data().members !== change.before.data().members){
         const array = change.after.data().members;
         const lastIndex = array.length - 1;
@@ -382,8 +365,7 @@ exports.ticketsToNewUser = functions.region('europe-west1').firestore.document('
 });
 
 //Quitar usuario de member si cambia de localización
-exports.removeMemberLocationChange = functions.region('europe-west1').firestore.document('/users/{userId}')
-.onUpdate((change) => {
+exports.removeMemberLocationChange = functions.region('europe-west1').firestore.document('/users/{userId}').onUpdate((change) => {
     console.log(change.before.data());
     console.log(change.after.data());
     if(change.before.data().location !== change.after.data().location){
