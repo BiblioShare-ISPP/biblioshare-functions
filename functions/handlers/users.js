@@ -109,6 +109,20 @@ exports.deleteUser = (req, res) => {
   .then(function() {
     return db.doc(`/users/${req.user.handle}`).delete();
   })
+  .then(()=>{
+    return db.doc(`/halls/${req.user.location}`).get();
+  })
+  .then((data) => {
+    if(data.exists){
+        const arrayMembers = data.data().members;
+        if(arrayMembers.includes(req.user.handle)){
+            arrayMembers.remove(req.user.handle);
+            return db.doc(`/halls/${data.data().location}`).update({
+                members: arrayMembers 
+            });
+        }
+    }
+  })
   .then(() =>{
     return res.status(201).json("User deleted successfully");
   })
