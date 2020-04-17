@@ -104,6 +104,19 @@ exports.login = (req, res) => {
     });
 };
 
+exports.deleteUser = (req, res) => {
+  admin.auth().deleteUser(req.user.uid)
+  .then(function() {
+    return db.doc(`/users/${req.user.handle}`).delete();
+  })
+  .then(() =>{
+    return res.status(201).json("User deleted successfully");
+  })
+  .catch(function(err) {
+    console.error(err);
+    return res.status(500).json({error: err.code});
+  });
+};
 //Add user details
 exports.addUserDetails = (req, res) => {
   let userDetails = reduceUserDetails(req.body);

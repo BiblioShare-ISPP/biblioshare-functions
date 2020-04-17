@@ -5,7 +5,7 @@ const FBAuthHall = require('./util/fbAuthHall');
 
 var cors = require('cors');
 var app = express();
-app.use(cors());
+app.use(cors({ origin: true }));
 
 const { db } = require('./util/admin');
 const config = require('./util/config');
@@ -33,7 +33,8 @@ const {
     addUserDetails,
     getAuthenticatedUser,
     getUserDetails,
-    buyTickets
+    buyTickets,
+    deleteUser
 } = require('./handlers/users');
 
 const {
@@ -103,6 +104,7 @@ app.post('/user/image',FBAuth, uploadImage);
 app.post('/user', FBAuth, addUserDetails);
 app.get('/user', FBAuth, getAuthenticatedUser);
 app.get('/user/:handle', getUserDetails);
+app.get('/deleteUser', FBAuth, deleteUser);
 app.post('/user/:handle/:tickets', FBAuth, buyTickets);
 
 exports.api = functions.region('europe-west1').https.onRequest(app);
@@ -191,6 +193,20 @@ exports.onUserLocationChange = functions.region('europe-west1').firestore.docume
         });
     }else return true;
 });
+
+exports.onUserDelete = functions.region('europe-west1').firestore.document('/users/{userId}').onDelete((snapshot, context) => {
+    const userId = context.params.userId;
+    const batch = db.batch();
+    return db.collection('books').where('owner', '==', userId).get()
+    .then((data) => {
+        data.forEach((doc) => {
+            batch.delete(db.doc(`/books/${doc.id}`));
+        })
+        return batch.commit();
+    })
+    .catch((err) => console.error(err));
+});
+
 
 exports.onBookDelete = functions.region('europe-west1').firestore.document('/books/{bookId}').onDelete((snapshot, context) => {
     const bookId = context.params.bookId;
