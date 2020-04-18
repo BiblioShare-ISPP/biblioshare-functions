@@ -125,7 +125,7 @@ exports.getAllBooksByLocation = (req, res) => {
 };
 
 //Post a book
-exports.postOneBook = (req, res) =>{
+exports.postOneBook = async(req, res) =>{
     console.log(req.body);
     const newBook = {
         author: req.body.author,
@@ -140,7 +140,7 @@ exports.postOneBook = (req, res) =>{
         commentCount: 0,
         availability: "available"
     };
-    console.log(newBook);
+
     if(newBook.cover.trim() === ''){
         newBook.cover = `https://firebasestorage.googleapis.com/v0/b/${config.storageBucket}/o/no-cover.jpg?alt=media`;
     }
@@ -149,14 +149,17 @@ exports.postOneBook = (req, res) =>{
 
     if(!valid) return res.status(400).json(errors);
 
-    const Url = 'https://www.googleapis.com/books/v1/volumes?q='+newBook.title;
-    fetch(Url)
-    .then((data) => {
-        return data.json();
+    const Url = 'https://www.googleapis.com/books/v1/volumes?q='+newBook.title+'&country=US';
+    await fetch(Url)
+    .then(async function(data){
+        return await data.json();
     })
     .then((res)=>{
+        console.log(res);
         var publishedDate = 1900;
+        console.log("Total items:" + res.totalItems);
         if(res.totalItems > 0){
+            console.log("Items length:" + res.items.length);
             if(res.items.length > 0){
                 publishedDate = res.items[0].volumeInfo.publishedDate.substring(0, 4);
             }else{
@@ -165,14 +168,17 @@ exports.postOneBook = (req, res) =>{
         }else{
             publishedDate = 1900;
         }
+        console.log(publishedDate);
         return publishedDate;
     })
     .then((year)=>{
         if(new Date().getFullYear()-year <= 1){
             newBook.price = 2;
         }
+        console.log("Calculo del precio:" + newBook.price)
+        return newBook;
     })
-    .then(()=>{
+    .then((newBook)=>{
         db
         .collection('books')
         .add(newBook)
