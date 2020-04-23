@@ -31,6 +31,7 @@ const {
     login, 
     uploadImage, 
     addUserDetails,
+    geoLocateUser,
     getAuthenticatedUser,
     getUserDetails,
     buyTickets,
@@ -100,6 +101,7 @@ app.post('/book/image', FBAuth, uploadCover);
 //Users routes
 app.post('/signup', signup);
 app.post('/login', login);
+app.post('/geo', FBAuth, geoLocateUser);
 app.post('/user/image',FBAuth, uploadImage);
 app.post('/user', FBAuth, addUserDetails);
 app.get('/user', FBAuth, getAuthenticatedUser);
@@ -188,6 +190,21 @@ exports.onUserLocationChange = functions.region('europe-west1').firestore.docume
             data.forEach(doc => {
                 const book = db.doc(`/books/${doc.id}`);
                 batch.update(book, { location: change.after.data().location});
+            });
+            return batch.commit();
+        });
+    }else return true;
+});
+
+exports.onUserGeoLocationChange = functions.region('europe-west1').firestore.document('/users/{userId}').onUpdate((change) => {
+    if(change.before.data().geo !== change.after.data().geo){
+        console.log('Geolocation has changed');
+        const batch = db.batch();
+        return db.collection('books').where('owner', '==',change.before.data().handle).get()
+        .then((data) => {
+            data.forEach(doc => {
+                const book = db.doc(`/books/${doc.id}`);
+                batch.update(book, { geo: change.after.data().geo});
             });
             return batch.commit();
         });

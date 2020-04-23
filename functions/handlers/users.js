@@ -104,6 +104,23 @@ exports.login = (req, res) => {
     });
 };
 
+exports.geoLocateUser = (req, res) => {
+  const geoLocation = {
+    lng: req.body.lng,
+    lat: req.body.lat
+  }
+  return db.doc(`/users/${req.user.handle}`).update({
+    geo: geoLocation
+  })
+  .then(() => {
+    return res.status(201).json("User geolocated successfully");
+  })
+  .catch(function(err) {
+    console.error(err);
+    return res.status(500).json({error: err.code});
+  });
+}
+
 exports.deleteUser = (req, res) => {
   admin.auth().deleteUser(req.user.uid)
   .then(function() {
