@@ -23,6 +23,10 @@ module.exports = (req, res, next) => {
         req.user.imageUrl = data.docs[0].data().imageUrl;
         req.user.location = data.docs[0].data().location;
         req.user.tickets = data.docs[0].data().tickets;
+        req.user.geo = {};
+        if(typeof(data.docs[0].data().geo)!== "undefined"){
+            req.user.geo = data.docs[0].data().geo;
+        }
         return next();
     })
     .catch(err => {

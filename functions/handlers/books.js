@@ -134,6 +134,7 @@ exports.postOneBook = async(req, res) =>{
         price: 1,
         userPostDate: new Date().toISOString(),
         owner: req.user.handle,
+        geo: req.user.geo,
         location: (req.user.location == null) ? "" : req.user.location,
         ownerImage: req.user.imageUrl,
         requestCount: 0,
