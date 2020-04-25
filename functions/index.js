@@ -24,7 +24,9 @@ const {
     getBooksByUser,
     uploadCover,
     findBooks,
-    changeToAvailable
+    changeToAvailable,
+    addBookToDesired,
+    removeBookDesired
 } = require('./handlers/books');
 const { 
     signup, 
@@ -97,6 +99,9 @@ app.get('/book/:bookId/cancelRequest', FBAuth, cancelRequestBook);
 app.post('/book/:bookId/comment', FBAuth, commentOnBook);
 app.get('/books/:handle', getBooksByUser);
 app.post('/book/image', FBAuth, uploadCover);
+app.get('/wish/:bookId', FBAuth, addBookToDesired);
+app.get('/unwish/:bookId', FBAuth, removeBookDesired);
+
 
 //Users routes
 app.post('/signup', signup);
@@ -239,6 +244,12 @@ exports.onBookDelete = functions.region('europe-west1').firestore.document('/boo
         data.forEach((doc) => {
             batch.delete(db.doc(`/requests/${doc.id}`));
         })
+        return db.collection('desireds').where('bookId', '==', bookId).get();
+    })
+    .then((data) => {
+        data.forEach((doc) => {
+            batch.delete(db.doc(`/desireds/${doc.id}`));
+        })
         return db.collection('notification').where('bookId', '==', bookId).get();
     })
     .then((data) => {
@@ -248,6 +259,65 @@ exports.onBookDelete = functions.region('europe-west1').firestore.document('/boo
         return batch.commit();
     })
     .catch((err) => console.error(err));
+});
+
+//Se le avisa a los usuarios que tienen un libro deseado cuando vuelve a estar disponible
+exports.onBookAvailable = functions.region('europe-west1').firestore.document('/books/{bookId}').onUpdate((change, context) => {
+    const bookId = context.params.bookId;
+    if(change.after.data().availability === 'available'){
+        const batch = db.batch();
+        let handles = [];
+        return db.collection('desireds').where('bookId', '==',bookId).get()
+        .then((data) => {
+            data.forEach(doc => {
+                //Para cada desired se borra y se le manda un correo 
+                const desireds = db.doc(`/desireds/${doc.id}`);
+                handles.push(doc.data().userHandle);
+                batch.delete(desireds);
+            });
+            return batch.commit();
+        })
+        .then(async()=>{
+            let emails = await emailsWaiting();
+            async function emailsWaiting(){
+                let userEmails =[];
+                for(handle of handles){
+                    const email = await db.doc(`/users/${handle}`).get()
+                        .then((data) => {
+                            return data.data().email;
+                        });
+                    userEmails.push(email);
+                };
+                return userEmails;
+            }
+            return emails;
+        })
+        .then((data) => {
+            var transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: `${config.user}`,
+                    pass: `${config.pass}`
+                }
+            });
+            var mailOptionsOwner = {
+                from: `${config.user}`,
+                to: `${data}`,
+                subject: 'BiblioShare - Book available',
+                html: `¡One of your books from desired list is available!<br /> 
+                       <b>${change.after.data().title}</b> is available, login and request it <a href="https://biblioshare-final.firebaseapp.com/books/${bookId}">here</a>`
+            };
+            transporter.sendMail(mailOptionsOwner, function(error, info){
+                if (error) {
+                    console.log(error);
+                } else {
+                    console.log('Email sent: ' + info.response);
+                }
+            });
+        })
+        .catch(err => console.error(err));
+
+    }else return true;
 });
 
 //Se rechazan las otras peticiones

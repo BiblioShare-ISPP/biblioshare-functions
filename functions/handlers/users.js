@@ -244,6 +244,13 @@ exports.getAuthenticatedUser = (req, res) => {
         notificationId: doc.id
       })
     });
+    return db.collection('desireds').where('userHandle', '==', req.user.handle).get()
+  })
+  .then(data => {
+    userData.desireds = [];
+    data.forEach(doc => {
+      userData.desireds.push(doc.data());
+    });
     return res.json(userData);
   })
   .catch(err => {

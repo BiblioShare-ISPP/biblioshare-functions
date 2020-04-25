@@ -303,6 +303,86 @@ exports.requestBook = (req, res) =>{
     })
 };
 
+//Add book to desired
+exports.addBookToDesired = (req, res) =>{
+    const requestDocument = db.collection('desireds').where('userHandle', '==', req.user.handle)
+    .where('bookId', '==', req.params.bookId).limit(1);
+
+    const bookDocument = db.doc(`/books/${req.params.bookId}`);
+
+    let bookData;
+
+    bookDocument.get()
+    .then(doc => {
+        if(doc.exists){
+            bookData = doc.data();
+            if(bookData.availability === "available"){
+                return res.status(404).json({ error: 'You can only add to desired books with provided status'});
+            }
+            bookData.bookId = doc.id;
+            return requestDocument.get();
+        }else{
+            return res.status(404).json({ error: 'Book not found'});
+        }
+    })
+    .then(data => {
+        if(data.empty){
+            return db.collection('desireds').add({
+                bookId: req.params.bookId,
+                bookOwner: bookData.owner,
+                userHandle: req.user.handle,
+                title: bookData.title,
+                cover: bookData.cover,
+                createdAt: new Date().toISOString()
+            })
+            .then(() => {
+                return res.json(bookData);
+            });
+        } else {
+            return res.status(400).json({ error: 'Book already requested'});
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        res.status(500).json({ error: err.code});
+    })
+};
+
+//Cancel a book request
+exports.removeBookDesired = (req, res) => {
+    const requestDocument = db.collection('desireds').where('userHandle', '==', req.user.handle)
+    .where('bookId', '==', req.params.bookId).limit(1);
+
+    const bookDocument = db.doc(`/books/${req.params.bookId}`);
+
+    let bookData;
+
+    bookDocument.get()
+    .then(doc => {
+        if(doc.exists){
+            bookData = doc.data();
+            bookData.bookId = doc.id;
+            return requestDocument.get();
+        }else{
+            return res.status(404).json({ error: 'Book not found'});
+        }
+    })
+    .then(data => {
+        if(data.empty){
+            return res.status(400).json({ error: 'Book not desired'});
+        } else {
+            return db.doc(`/desireds/${data.docs[0].id}`).delete()
+            .then(()=>{
+                res.json(bookData);
+            })
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        res.status(500).json({ error: err.code});
+    })
+};
+
 //Change book to available again
 exports.changeToAvailable = (req, res) =>{
     const bookDocument = db.doc(`/books/${req.params.bookId}`);
