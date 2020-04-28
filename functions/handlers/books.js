@@ -332,6 +332,8 @@ exports.addBookToDesired = (req, res) =>{
                 bookOwner: bookData.owner,
                 userHandle: req.user.handle,
                 title: bookData.title,
+                author: bookData.author,
+                ownerImage: bookData.ownerImage,
                 cover: bookData.cover,
                 createdAt: new Date().toISOString()
             })
