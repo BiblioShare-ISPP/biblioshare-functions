@@ -25,7 +25,8 @@ exports.findBooks = (req, res) => {
                 owner: doc.data().owner,
                 ownerImage: doc.data().ownerImage,
                 location: doc.data().location,
-                availability: doc.data().availability
+                availability: doc.data().availability,
+                tags: doc.data().tags
             });
         });
 
@@ -89,7 +90,8 @@ exports.getAllBooks = (req, res) => {
                 owner: doc.data().owner,
                 ownerImage: doc.data().ownerImage,
                 location: doc.data().location,
-                availability: doc.data().availability
+                availability: doc.data().availability,
+                tags: doc.data().tags
             });
         });
         return res.json(books);
@@ -116,7 +118,8 @@ exports.getAllBooksByLocation = (req, res) => {
                 owner: doc.data().owner,
                 ownerImage: doc.data().ownerImage,
                 location: doc.data().location,
-                availability: doc.data().availability
+                availability: doc.data().availability,
+                tags: doc.data().tags
             });
         });
         return res.json(books);
@@ -139,7 +142,8 @@ exports.postOneBook = async(req, res) =>{
         ownerImage: req.user.imageUrl,
         requestCount: 0,
         commentCount: 0,
-        availability: "available"
+        availability: "available",
+        tags: req.body.tags
     };
 
     if(newBook.cover.trim() === ''){
@@ -499,7 +503,8 @@ exports.getBooksByUser = (req, res) => {
                 owner: doc.data().owner,
                 ownerImage: doc.data().ownerImage,
                 location: doc.data().location,
-                availability: doc.data().availability
+                availability: doc.data().availability,
+                tags: doc.data().tags
             });
         });
         return res.json(books);
